@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+
+*.env
+.env
+
 # User-specific files
 *.rsuser
 *.suo
@@ -97,8 +101,7 @@ StyleCopReport.xml
 *.pidb
 *.svclog
 *.scc
-*.env
-.env
+
 # Chutzpah Test files
 _Chutzpah*
 
@@ -362,3 +365,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/.env
+/.env
+/.env
