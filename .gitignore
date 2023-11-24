@@ -97,7 +97,8 @@ StyleCopReport.xml
 *.pidb
 *.svclog
 *.scc
-
+*.env
+.env
 # Chutzpah Test files
 _Chutzpah*
 
@@ -178,7 +179,7 @@ DocProject/Help/html
 
 # Click-Once directory
 publish/
-
+.env
 # Publish Web Output
 *.[Pp]ublish.xml
 *.azurePubxml
