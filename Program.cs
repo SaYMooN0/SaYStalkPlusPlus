@@ -6,20 +6,21 @@ namespace SaYStalkPlusPlus
     internal static class Program
     {
         [STAThread]
-        static void Main()
+        static async Task Main()
         {
+
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
             Env.Load();
             string? botToken = Environment.GetEnvironmentVariable("TOKEN");
-            if (botToken is null) {
+            if (botToken is null)
+            {
                 return;
             }
             Bot bot = new(botToken);
-            bot.Start();
-            ApplicationConfiguration.Initialize();
-            Application.Run(new Form1());
+            await bot.StartAsync();
 
-         
-         
+            Application.Run();
         }
     }
 }
