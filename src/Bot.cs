@@ -3,6 +3,7 @@ using Telegram.Bot.Types.Enums;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Exceptions;
+using SaYStalkPlusPlus.src.Commands;
 
 namespace SaYStalkPlusPlus.src
 {
@@ -10,6 +11,14 @@ namespace SaYStalkPlusPlus.src
     {
         private string _token;
         private CancellationTokenSource _cancellationToken;
+        public delegate CommandResult CommandDelegate(string[] args);
+        private static readonly Dictionary<string, CommandDelegate> commands = new Dictionary<string, CommandDelegate>{
+            
+            { "allProcesses", GetAllProcesses.Execute },
+            { "activeProcesses", GetActiveProcesses.Execute},
+            {"commands", ShowAllCommands },
+
+        };
         public Bot(string tokenString)
         {
             _token = tokenString;
@@ -34,9 +43,25 @@ namespace SaYStalkPlusPlus.src
         private void StopBot() { _cancellationToken.Cancel(); }
         private static async Task SendMessage(ITelegramBotClient botClient, long chatId, string messageText)
         {
+            const int MaxMessageLength = 4096;
+
+            if (messageText.Length <= MaxMessageLength)
+                await botClient.SendTextMessageAsync(chatId, messageText);
+            else
+            {
+                for (int i = 0; i < messageText.Length; i += MaxMessageLength)
+                {
+                    string chunk = messageText.Substring(i, Math.Min(MaxMessageLength, messageText.Length - i));
+                    await botClient.SendTextMessageAsync(chatId, chunk);
+                }
+            }
+        }
+
+        private static async Task SendUnknownCommandMessage(ITelegramBotClient botClient, long chatId, string unknownCommand)
+        {
             await botClient.SendTextMessageAsync(
                 chatId: chatId,
-                text: messageText
+                text: $"The \"{unknownCommand}\" command is unknown. To see a list of all available commands, send \"/commands\""
             );
         }
         private static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
@@ -69,7 +94,37 @@ namespace SaYStalkPlusPlus.src
         }
         private static async Task HandleCommand(ITelegramBotClient botClient, CancellationToken cancellationToken, string commandText, long chatId)
         {
-            await SendMessage(botClient, chatId, "ur cmd: " + commandText);
+            string command = commandText.Split(' ')[0];
+            if (command.Length > 1)
+                command = command.Substring(1);
+            if (!commands.Keys.Contains(command))
+            {
+               
+            }
+            if (commands.TryGetValue(command, out var executableCommand))
+            {
+                string?[] args = command.Split(" ")[1..];
+                CommandResult result = executableCommand(args);
+                string messageText = result.Success ? result.ResultString : result.ErrorString;
+                if (!string.IsNullOrEmpty(messageText))
+                    await SendMessage(botClient, chatId, result.ResultString);
+            }
+            else
+            {
+                SendUnknownCommandMessage(botClient, chatId, command);
+                return;
+            }
+            
         }
+        private static CommandResult ShowAllCommands(string?[] args)
+        {
+            string stringToRetutn = "Avaliable commands: \n";
+            foreach (string command in commands.Keys)
+            {
+                stringToRetutn += $"/{command} \n";
+            }
+            return new CommandResult(true, stringToRetutn, null);
+        }
+
     }
 }

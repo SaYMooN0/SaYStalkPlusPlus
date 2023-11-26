@@ -1,9 +1,10 @@
 ﻿using System.Diagnostics;
 namespace SaYStalkPlusPlus.src.Commands
 {
-    internal class GetAllProcesses : ICommand
+    class GetAllProcesses : ICommand
     {
-        public CommandResult Execute(string[] args)
+
+        static public CommandResult Execute(string[] args)
         {
             Process[] allProcesses = Process.GetProcesses();
             string stringToReturn = "All processes: \n";

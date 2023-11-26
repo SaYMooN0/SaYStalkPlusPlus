@@ -2,6 +2,6 @@
 {
     public interface ICommand
     {
-        public CommandResult Execute(string[] args);
+        static abstract public CommandResult Execute(string[] args);
     }
 }
