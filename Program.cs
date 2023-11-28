@@ -15,6 +15,7 @@ namespace SaYStalkPlusPlus
             string? botToken = Environment.GetEnvironmentVariable("TOKEN");
             if (botToken is null)
             {
+                MessageBox.Show("No telegram token provided");
                 return;
             }
             Bot bot = new(botToken);

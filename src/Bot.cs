@@ -13,9 +13,11 @@ namespace SaYStalkPlusPlus.src
         private CancellationTokenSource _cancellationToken;
         public delegate CommandResult CommandDelegate(string[] args);
         private static readonly Dictionary<string, CommandDelegate> commands = new Dictionary<string, CommandDelegate>{
-            
+
             { "allProcesses", GetAllProcesses.Execute },
             { "activeProcesses", GetActiveProcesses.Execute},
+            { "killProcess", KillProcess.Execute},
+            { "killSSPP", KillSaYStalkPlusPlus.Execute},
             {"commands", ShowAllCommands },
 
         };
@@ -97,24 +99,20 @@ namespace SaYStalkPlusPlus.src
             string command = commandText.Split(' ')[0];
             if (command.Length > 1)
                 command = command.Substring(1);
-            if (!commands.Keys.Contains(command))
-            {
-               
-            }
             if (commands.TryGetValue(command, out var executableCommand))
             {
-                string?[] args = command.Split(" ")[1..];
+                string?[] args = commandText.Split(" ")[1..];
                 CommandResult result = executableCommand(args);
                 string messageText = result.Success ? result.ResultString : result.ErrorString;
                 if (!string.IsNullOrEmpty(messageText))
-                    await SendMessage(botClient, chatId, result.ResultString);
+                    await SendMessage(botClient, chatId, messageText);
             }
             else
             {
                 SendUnknownCommandMessage(botClient, chatId, command);
                 return;
             }
-            
+
         }
         private static CommandResult ShowAllCommands(string?[] args)
         {
