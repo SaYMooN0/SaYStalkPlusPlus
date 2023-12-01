@@ -29,14 +29,13 @@ namespace SaYStalkPlusPlus.src
         {
             _token = tokenString;
             _cancellationToken = new CancellationTokenSource();
+            UserStorage.Init();
         }
         public async Task StartAsync()
         {
             var botClient = new TelegramBotClient(_token);
-            ReceiverOptions receiverOptions = new()
-            {
-                AllowedUpdates = Array.Empty<UpdateType>()
-            };
+            ReceiverOptions receiverOptions = new() { AllowedUpdates = Array.Empty<UpdateType>() };
+            await ClearPendingUpdatesAsync(botClient);
 
             botClient.StartReceiving(
                 updateHandler: HandleUpdateAsync,
@@ -44,8 +43,27 @@ namespace SaYStalkPlusPlus.src
                 receiverOptions: receiverOptions,
                 cancellationToken: _cancellationToken.Token
             );
+            foreach (var chatId in UserStorage.IDs)
+            {
+                await botClient.SendTextMessageAsync(chatId, "Bot is running");
+            }
 
         }
+        public async Task ClearPendingUpdatesAsync(ITelegramBotClient botClient)
+        {
+            try
+            {
+                var updates = await botClient.GetUpdatesAsync();
+
+                if (updates.Any())
+                {
+                    var maxUpdateId = updates.Max(update => update.Id) + 1;
+                    await botClient.GetUpdatesAsync(offset: maxUpdateId);
+                }
+            }
+            catch { return; }
+        }
+
         private void StopBot() { _cancellationToken.Cancel(); }
         private static async Task SendMessage(ITelegramBotClient botClient, long chatId, string messageText)
         {
@@ -85,7 +103,7 @@ namespace SaYStalkPlusPlus.src
             if (message.Text is not { } messageText) return;
 
             long chatId = message.Chat.Id;
-
+            UserStorage.SaveIfNeeded(chatId);
             if (!messageText.StartsWith('/'))
             {
                 await SendMessage(botClient, chatId, "ur msg: " + messageText);
@@ -114,9 +132,9 @@ namespace SaYStalkPlusPlus.src
             {
                 string?[] args = commandText.Split(" ")[1..];
                 CommandResult result = executableCommand(args);
-                if (result is null)   return;
+                if (result is null) return;
 
-                switch(result.Type)
+                switch (result.Type)
                 {
                     case CommandResultType.Text:
                         {
@@ -127,9 +145,9 @@ namespace SaYStalkPlusPlus.src
                         }
                     case CommandResultType.Photo:
                         {
-                            if(!result.Success)
+                            if (!result.Success)
                             {
-                                string errorText= result.ErrorString;
+                                string errorText = result.ErrorString;
                                 await SendMessage(botClient, chatId, errorText);
                                 return;
                             }
@@ -139,7 +157,7 @@ namespace SaYStalkPlusPlus.src
                     default: return;
                 }
 
-               
+
             }
             else
             {
